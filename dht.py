@@ -2,6 +2,7 @@
 
 from pydht import DHT 
 import json,uuid,yaml 
+import M2Crypto
 
 
 try:
@@ -13,6 +14,13 @@ except:
     f.write(json.dumps(node_id))
     f.close()
 
+host,port = '',7000
+strap = 'bl3dr.com'
+d = DHT(host,port,id=node_id,boot_host=strap,boot_port=port)
+nodes = d.iterative_find_nodes(2)
+print nodes
+glob = {}
+
 # recurse through structure path
 def make_path(base,dict,path_dict):
     if type(dict) == type({}):
@@ -22,7 +30,7 @@ def make_path(base,dict,path_dict):
             path_dict[base+'/'+i] = p 
         return k 
     else:
-        print 'fail:',base,dict
+        print 'data:',base,dict
         path_dict[base] = dict
         return dict 
 
@@ -37,11 +45,6 @@ def load_structure(d,file_path='structure.yml'):
         d[i] = path_dict[i]
     return path_dict
 
-host,port = '',7000
-strap = 'bl3dr.com'
-d = DHT(host,port,id=node_id,boot_host=strap,boot_port=port)
-nodes = d.iterative_find_nodes(2)
-print nodes
 
 path_dict = load_structure(d)
 
@@ -56,9 +59,8 @@ def load_data(d):
     except:
         print 'fail'
 
-load_data(d)
 
-glob = {}
+load_data(d)
 
 def add(key,value):
 	glob[key] = 1
