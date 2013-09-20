@@ -10,16 +10,25 @@ from .hashing import hash_function, random_id
 from .peer import Peer
 from .shortlist import Shortlist
 
+import logging 
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+logger.addHandler(ch)
+
+# network spec
 k = 20
 alpha = 3
 id_bits = 128
-iteration_sleep = 1
+iteration_sleep = 0.1 # more aggressive iteration
 
 class DHTRequestHandler(SocketServer.BaseRequestHandler):
 
     def handle(self):
         try:
             message = json.loads(self.request[0].strip())
+            logger.info(message)
             message_type = message["message_type"]
             if message_type == "ping":
                 self.handle_ping(message)
@@ -49,6 +58,7 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         peer.pong(socket=self.server.socket, peer_id=self.server.dht.peer.id, lock=self.server.send_lock)
         
     def handle_pong(self, message):
+        logger.info('pong'+str(message))
         pass
         
     def handle_find(self, message, find_value=False):
