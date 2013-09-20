@@ -1,9 +1,11 @@
 import threading
 
 from .peer import Peer
+import logging
 
 class Shortlist(object):
     def __init__(self, k, key):
+        logging.debug('gen short list for %s',k)
         self.k = k
         self.key = key
         self.list = list()

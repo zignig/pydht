@@ -2,10 +2,12 @@ import hashlib
 import json
 
 from .hashing import hash_function
+import logging
 
 class Peer(object):
     ''' DHT Peer Information'''
     def __init__(self, host, port, id):
+        logging.debug('create peer %s %s %s',host,str(port),str(id))
         self.host, self.port, self.id = host, port, id
         
     def astriple(self):

@@ -12,9 +12,9 @@ from .shortlist import Shortlist
 
 import logging 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 logger.addHandler(ch)
 
 # network spec
@@ -28,7 +28,7 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         try:
             message = json.loads(self.request[0].strip())
-            logger.info(message)
+            logging.debug(message)
             message_type = message["message_type"]
             if message_type == "ping":
                 self.handle_ping(message)
@@ -97,11 +97,13 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
 
 class DHTServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
     def __init__(self, host_address, handler_cls):
+        logging.info('create server')
         SocketServer.UDPServer.__init__(self, host_address, handler_cls)
         self.send_lock = threading.Lock()
 
 class DHT(object):
     def __init__(self, host, port, id=None, boot_host=None, boot_port=None):
+        logging.info('create dht object')
         if not id:
             id = random_id()
         self.peer = Peer(unicode(host), port, id)
@@ -148,6 +150,7 @@ class DHT(object):
             
     def bootstrap(self, boot_host, boot_port):
         if boot_host and boot_port:
+            logging.debug('bootstrapping host %s %s',boot_host,str(boot_port))
             boot_peer = Peer(boot_host, boot_port, 0)
             self.iterative_find_nodes(self.peer.id, boot_peer=boot_peer)
                     
