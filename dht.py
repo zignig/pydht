@@ -3,23 +3,20 @@
 from pydht import DHT 
 import json,uuid,yaml 
 import M2Crypto
+import register
 
-
-try:
-    os.stat('node_id.txt')
-    node_id = json.loads((open('node_id.txt').read()))
-except:
-    node_id = uuid.uuid4().int
-    f = open('node_id.txt','w')
-    f.write(json.dumps(node_id))
-    f.close()
+#load node
+reg = register.registration()
 
 host,port = '',7000
 strap = 'bl3dr.com'
-d = DHT(host,port,id=node_id,boot_host=strap,boot_port=port)
+d = DHT(host,port,id=reg.node_id,boot_host=strap,boot_port=port)
+#post the public key up by it's own hash
+d[reg.pub.as_pem()] = reg.pub.as_pem()
+
+
 nodes = d.iterative_find_nodes(2)
 print nodes
-glob = {}
 
 # recurse through structure path
 def make_path(base,dict,path_dict):
@@ -34,7 +31,6 @@ def make_path(base,dict,path_dict):
         path_dict[base] = dict
         return dict 
 
-
 # load structure file
 def load_structure(d,file_path='structure.yml'):
     structure = yaml.load(open(file_path))
@@ -46,7 +42,7 @@ def load_structure(d,file_path='structure.yml'):
     return path_dict
 
 
-path_dict = load_structure(d)
+#path_dict = load_structure(d)
 
 def load_data(d):
     try:
@@ -60,12 +56,7 @@ def load_data(d):
         print 'fail'
 
 
-load_data(d)
-
-def add(key,value):
-	glob[key] = 1
-	d['glob'] = glob.keys()
-	d[key] = value
+#load_data(d)
 
 def save():
     f = open('data.txt','w')

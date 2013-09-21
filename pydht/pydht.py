@@ -10,11 +10,23 @@ from .hashing import hash_function, random_id
 from .peer import Peer
 from .shortlist import Shortlist
 
+
+# set up redis aconnection
+global red
+try:
+    import redis
+    red = redis.Redis()
+    print 'redis connected'
+except:
+    print 'no redis , user faker'
+
+
+#set uploagging 
 import logging 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 logger.addHandler(ch)
 
 # network spec

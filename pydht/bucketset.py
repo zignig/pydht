@@ -31,7 +31,7 @@ class BucketSet(object):
                     bucket.pop(bucket.index(peer_triple))
                 elif len(bucket) >= self.bucket_size:
                     bucket.pop(0)
-                logging.debug('add peer to bucket %s',str(peer_triple))
+                logging.debug('add %s to bucket %s',str(peer_triple),str(bucket_number))
                 bucket.append(peer_triple)
                 
     def nearest_nodes(self, key, limit=None):
