@@ -32,7 +32,7 @@ logger.addHandler(ch)
 # network spec
 k = 20
 alpha = 3
-id_bits = 128
+id_bits = 160
 iteration_sleep = 0.1 # more aggressive iteration
 
 class DHTRequestHandler(SocketServer.BaseRequestHandler):
