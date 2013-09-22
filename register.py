@@ -25,6 +25,7 @@ class registration:
     """
     def __init__(self,path='.'):
         self.key = None
+        self.known_keys = {}
         try:
             os.stat('keys')
         except:
@@ -53,24 +54,62 @@ class registration:
 
         
     def gen_doc(self,doc):
-        doc['origin'] = self.node_id
-        enc_js = json.dumps(doc,sort_keys=True,indent=1)
+        made_doc = {}
+        made_doc['origin'] = self.node_id
+        made_doc['data'] = doc
+        enc_js = json.dumps(made_doc,sort_keys=True,indent=1)
         signer = M2Crypto.EVP.load_key('keys/private.pem')
         signer.sign_init()
         signer.sign_update(enc_js)
         sig = signer.sign_final()
         b64_sig = base64.b64encode(sig)
-        doc['sig'] = b64_sig
-        return doc
+        made_doc['sig'] = b64_sig
+        return made_doc 
    
+    def fetch_key(self,origin):
+        logging.info('fetch key '+str(origin))
+        path = 'public_keys/'+str(origin)+'.key'
+        try:
+            os.stat(path)
+            key = M2Crypto.RSA.load_pub_key(path)
+            return True,key
+        except:
+            logging.error(path)
+            return False,''
+
+    def check_origin(self,origin):
+        logging.info('checking for '+str(origin))
+        if origin in self.known_keys:
+            print('known origin')
+            return self.known_keys['origin']
+        else:
+            status,key = self.fetch_key(origin)
+        if status:
+            self.known_keys[origin] = key
+            return key
+        else:
+            raise ValueError
+
     def verify_doc(self,doc):
         print(doc)
         sdoc = doc.copy()
         if 'sig' in sdoc:
             sig = sdoc['sig']
+            logging.info('has sig '+sig)
+            dec_sig = base64.b64decode(sig)
             del sdoc['sig']
-            print sdoc
-            decoded_sig = base64.b64decode(sig)
+            if 'origin' in sdoc:
+                key = self.check_origin(sdoc['origin'])
             formatted_doc = json.dumps(sdoc,sort_keys=True,indent=1)
-            resp = self.pub.verify(formatted_doc,decoded_sig)
-            print resp
+            logging.info(formatted_doc)
+            verify_evp = M2Crypto.EVP.PKey()
+            verify_evp.assign_rsa = key
+            verify_evp.verify_init()
+            verify_evp.verify_update(formatted_doc)
+            result = verify_evp.verify_final(dec_sig)
+            print result
+            if result == 1:
+                logging.info('Correctly Decoded')
+                return doc
+            else:
+                logging.error('Failed verify')
