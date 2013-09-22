@@ -13,5 +13,13 @@ logger.addHandler(ch)
 reg = register.registration()
 reg.load_priv()
 
+logging.info('base test')
+logging.info('')
 a = reg.gen_doc('hello')
+print reg.verify_doc(a)
+
+logging.info('base test with altered data')
+logging.info('')
+a = reg.gen_doc('this is a test a longer test')
+a['data'] = 'fnord'
 print reg.verify_doc(a)

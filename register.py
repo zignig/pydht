@@ -57,34 +57,34 @@ class registration:
         made_doc['origin'] = self.node_id
         made_doc['data'] = doc
         enc_js = json.dumps(made_doc,sort_keys=True,indent=1)
-        logging.info('doc to sign :'+enc_js)
+        logging.debug('doc to sign :'+enc_js)
         signer = M2Crypto.EVP.load_key('keys/private.pem')
         signer.sign_init()
         signer.sign_update(enc_js)
         sig = signer.sign_final()
         b64_sig = base64.b64encode(sig)
-        logging.info(hashlib.sha1(enc_js).hexdigest())
+        logging.debug(hashlib.sha1(enc_js).hexdigest())
         made_doc['sig'] = b64_sig
-        logging.info('base sig : '+b64_sig)
+        logging.debug('base sig : '+b64_sig)
         return made_doc 
    
     def fetch_key(self,origin):
-        logging.info('fetch key '+str(origin))
+        logging.debug('fetch key '+str(origin))
         path = 'public_keys/'+str(origin)+'.key'
         try:
             os.stat(path)
             key = M2Crypto.RSA.load_pub_key(path)
-            logging.info('found key '+str(origin))
+            logging.debug('found key '+str(origin))
             return True,key
         except:
             logging.error(path)
             return False,''
 
     def check_origin(self,origin):
-        logging.info('check key '+str(origin))
+        logging.debug('check key '+str(origin))
         if origin in self.known_keys:
-            logging.info('known origin '+str(origin))
-            return self.known_keys['origin']
+            logging.debug('known origin '+str(origin))
+            return self.known_keys[origin]
         else:
             status,key = self.fetch_key(origin)
         if status:
@@ -94,22 +94,23 @@ class registration:
             raise ValueError
 
     def verify_doc(self,doc):
-        logging.info('verify doc')
+        logging.debug('verify doc')
         sdoc = doc.copy()
         if 'sig' in sdoc:
             sig = sdoc['sig']
             del sdoc['sig']
-            logging.info('has sig  : '+sig)
+            logging.debug('has sig  : '+sig)
             dec_sig = base64.b64decode(sig)
             if 'origin' in sdoc:
                 key = self.check_origin(sdoc['origin'])
                 formatted_doc = json.dumps(sdoc,sort_keys=True,indent=1)
-                logging.info('doc to check :'+formatted_doc)
-                logging.info(hashlib.sha1(formatted_doc).hexdigest())
+                logging.debug('doc to check :'+formatted_doc)
+                logging.debug(hashlib.sha1(formatted_doc).hexdigest())
                 verify_evp = M2Crypto.EVP.PKey()
-                verify_evp.assign_rsa(key)
+                verify_evp.assign_rsa(key,capture=0)
                 verify_evp.verify_init()
                 verify_evp.verify_update(formatted_doc) 
+                logging.debug('final verify')
                 result = verify_evp.verify_final(dec_sig)
                 logging.info(result)
                 if result == 1:
