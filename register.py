@@ -53,10 +53,24 @@ class registration:
 
         
     def gen_doc(self,doc):
-        doc['id'] = self.node_id
+        doc['origin'] = self.node_id
         enc_js = json.dumps(doc,sort_keys=True,indent=1)
-        print(enc_js)
-        sig = self.priv.sign(enc_js)
+        signer = M2Crypto.EVP.load_key('keys/private.pem')
+        signer.sign_init()
+        signer.sign_update(enc_js)
+        sig = signer.sign_final()
         b64_sig = base64.b64encode(sig)
         doc['sig'] = b64_sig
         return doc
+   
+    def verify_doc(self,doc):
+        print(doc)
+        sdoc = doc.copy()
+        if 'sig' in sdoc:
+            sig = sdoc['sig']
+            del sdoc['sig']
+            print sdoc
+            decoded_sig = base64.b64decode(sig)
+            formatted_doc = json.dumps(sdoc,sort_keys=True,indent=1)
+            resp = self.pub.verify(formatted_doc,decoded_sig)
+            print resp
