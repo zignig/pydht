@@ -13,6 +13,5 @@ logger.addHandler(ch)
 reg = register.registration()
 reg.load_priv()
 
-a = reg.gen_doc('this is a longer test')
-print(a)
+a = reg.gen_doc('hello')
 print reg.verify_doc(a)
