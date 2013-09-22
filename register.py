@@ -8,6 +8,7 @@ import M2Crypto
 import json,string,os
 import logging
 import hashlib
+import base64
 
 import readline,rlcompleter
 
@@ -48,4 +49,14 @@ class registration:
         print(self.node_id)    
     
     def load_priv(self):
-        pass
+        self.priv = M2Crypto.RSA.load_key('keys/private.pem')
+
+        
+    def gen_doc(self,doc):
+        doc['id'] = self.node_id
+        enc_js = json.dumps(doc,sort_keys=True,indent=1)
+        print(enc_js)
+        sig = self.priv.sign(enc_js)
+        b64_sig = base64.b64encode(sig)
+        doc['sig'] = b64_sig
+        return doc
