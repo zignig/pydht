@@ -9,10 +9,52 @@ import json,string,os
 import logging
 import hashlib
 import base64
+import sqlite3
 
 import readline,rlcompleter
 
+base_schema = ""
 readline.parse_and_bind('tab:complete')
+
+class key_store:
+    "sqlite storage for known keys"
+    base_schema = """
+    CREATE TABLE keys (node_id text,pub_key text,pub_doc,timestamp int,score int);
+    CREATE TABLE nodes (node_tripple text,timestamp int,quality int);
+    """
+    def __init__(self,path='public_keys/key.sdb'):
+        try:
+            os.stat('public_keys/key.sdb')
+            self.key_db = sqlite3.connect(path)
+        except:
+            logging.info('create key store '+path)
+            self.key_db = sqlite3.connect(path)
+            c = self.key_db.cursor()
+            c.executescript(self.base_schema)
+            self.key_db.commit()
+       
+    def insert_key(self,node_id,pub_key):
+        c = self.key_db.cursor()
+        c.execute('insert into keys (node_id,pub_key) values (?,?)',(node_id,pub_key))
+        self.key_db.commit()
+
+    def find_key(self,key):
+        logging.debug('check key '+str(key))
+        if len(str(key)) == 48:
+            c = self.key_db.cursor()
+            c.execute('select * from keys where node_id = ?',(str(key),))
+            key_struct = c.fetchone()
+            logging.debug('key structure :'+json.dumps(key_struct))
+            if key_struct != None:
+                return True,key_struct
+            else:
+                return False,''
+
+    def dump(self):
+        c = self.key_db.cursor()
+        c.execute('select * from keys')
+        r = c.fetchall()
+        return r 
 
 def password_callback(*args,**kwds):
     return 
@@ -47,6 +89,7 @@ class registration:
             logging.info('set id '+str(self.node_id))
         except:
             logging.error('fail local key')
+        self.key_store = key_store()
     
     def load_priv(self):
         self.priv = M2Crypto.RSA.load_key('keys/private.pem')
@@ -83,16 +126,24 @@ class registration:
 
     def check_origin(self,origin):
         logging.debug('check key '+str(origin))
-        if origin in self.known_keys:
-            logging.debug('known origin '+str(origin))
-            return self.known_keys[origin]
-        else:
-            status,key = self.fetch_key(origin)
-        if status:
-            self.known_keys[origin] = key
+        key_exists , key = self.key_store.find_key(origin)
+        if key_exists:
+            logging.info('key '+str(origin)+' exists')
             return key
         else:
-            raise ValueError
+            logging.error('no key '+str(origin))
+            raise KeyError
+
+#        if self.key_store.find_key(origin):
+#            logging.debug('known origin '+str(origin))
+#            return self.known_keys[origin]
+#        else:
+#            status,key = self.fetch_key(origin)
+#        if status:
+#            self.known_keys[origin] = key
+#            return key
+#        else:
+#            raise ValueError
 
     def verify_doc(self,doc):
         logging.debug('verify doc')
