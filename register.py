@@ -45,10 +45,6 @@ class key_store:
             c.execute('select * from keys where node_id = ?',(str(key),))
             key_struct = c.fetchone()
             logging.debug('key structure :'+json.dumps(key_struct))
-            if key_struct != None:
-                return True,key_struct
-            else:
-                return False,''
 
     def dump(self):
         c = self.key_db.cursor()
@@ -126,8 +122,8 @@ class registration:
 
     def check_origin(self,origin):
         logging.debug('check key '+str(origin))
-        key_exists , key = self.key_store.find_key(origin)
-        if key_exists:
+        key = self.key_store.find_key(origin)
+        if key != '':
             logging.info('key '+str(origin)+' exists')
             return key
         else:

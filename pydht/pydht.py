@@ -12,15 +12,6 @@ from .shortlist import Shortlist
 
 
 import logging 
-# set up redis aconnection
-global red
-try:
-    import redis
-    red = redis.Redis()
-    print 'redis connected'
-except:
-    print 'no redis , user faker'
-
 
 # network spec
 k = 20
@@ -112,10 +103,11 @@ class DHTServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
         self.send_lock = threading.Lock()
 
 class DHT(object):
-    def __init__(self, host, port, id=None, boot_host=None, boot_port=None):
+    def __init__(self, host, port,registry,id=None, boot_host=None, boot_port=None):
         logging.info('create dht object')
         if not id:
             id = random_id()
+        self.reg = registry
         self.peer = Peer(unicode(host), port, id)
         self.id = id
         self.data = {}
@@ -178,10 +170,11 @@ class DHT(object):
     def __setitem__(self, key, value):
         hashed_key = hash_function(key)
         nearest_nodes = self.iterative_find_nodes(hashed_key)
+        generated_doc = self.reg.gen_doc(value)
         if not nearest_nodes:
-            self.data[hashed_key] = value
+            self.data[hashed_key] = generated_doc 
         for node in nearest_nodes:
-            node.store(hashed_key, value, socket=self.server.socket, peer_id=self.peer.id)
+            node.store(hashed_key, generated_doc, socket=self.server.socket, peer_id=self.peer.id)
         
     def tick():
         pass
