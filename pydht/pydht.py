@@ -119,6 +119,7 @@ class DHT(object):
         if not id:
             id = random_id()
         self.peer = Peer(unicode(host), port, id)
+        self.id = id
         self.data = {}
         self.buckets = BucketSet(k, id_bits, self.peer.id)
         self.rpc_ids = {} # should probably have a lock for this

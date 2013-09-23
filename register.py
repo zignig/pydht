@@ -77,7 +77,8 @@ class registration:
             logging.debug('found key '+str(origin))
             return True,key
         except:
-            logging.error(path)
+            logging.error('key fail for :'+str(origin))
+            logging.error('FETCH key out of DHT')
             return False,''
 
     def check_origin(self,origin):
