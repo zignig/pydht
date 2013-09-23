@@ -126,7 +126,7 @@ class registration:
     def check_origin(self,origin):
         logging.debug('check key '+str(origin))
         key = self.key_store.find_key(origin)
-        if key != '':
+        if key != None:
             logging.info('key '+str(origin)+' exists')
             return key
         else:
@@ -154,6 +154,7 @@ class registration:
             del sdoc['sig']
             logging.debug('has sig  : '+sig)
             dec_sig = base64.b64decode(sig)
+            logging.debug(doc)
             if 'origin' in sdoc:
                 key = self.check_origin(sdoc['origin'])
                 formatted_doc = json.dumps(sdoc,sort_keys=True,indent=1)

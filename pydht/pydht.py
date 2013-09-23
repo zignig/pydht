@@ -93,6 +93,7 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         
     def handle_store(self, message):
         key = message["id"]
+        logging.error("DHT:handle_store need to chek message before storing")
         self.server.dht.data[key] = message["value"]
 
 
@@ -161,7 +162,7 @@ class DHT(object):
     def __getitem__(self, key):
         hashed_key = hash_function(key)
         if hashed_key in self.data:
-            return self.data[hashed_key]
+            return self.reg.verify_doc(self.data[hashed_key])
         result = self.iterative_find_value(hashed_key)
         verified_doc = self.reg.verify_doc(result)
         if verified_doc:
