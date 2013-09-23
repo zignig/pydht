@@ -27,7 +27,7 @@ def ERROR():
 name_space = 'zignig'
 sys.ps1 = name_space+'>>>'
 reg = register.registration()
-host,port = socket.gethostbyname(socket.gethostname()),7000 
+host,port = '',7000 
 strap = 'bl3dr.com'
 d = DHT(host,port,reg,id=reg.node_id,boot_host=strap,boot_port=port)
 #post the public key up by it's own hash
