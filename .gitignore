@@ -1,4 +1,5 @@
 keys/*
+public_keys/key.sdb
 *.py[co]
 
 # Packages

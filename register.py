@@ -10,6 +10,7 @@ import logging
 import hashlib
 import base64
 import sqlite3
+import StringIO
 
 import readline,rlcompleter
 
@@ -32,22 +33,37 @@ class key_store:
             c = self.key_db.cursor()
             c.executescript(self.base_schema)
             self.key_db.commit()
+            logging.info('loading germination key')
+            gn,gp = self.load_germinator()
+            self.insert_key(gn,gp)
        
+    def load_germinator(self,path='public_keys/germinate.key'):
+        germ_key = M2Crypto.RSA.load_pub_key(path)
+        germ_pem = germ_key.as_pem()
+        germ_node = str(int(hashlib.sha1(germ_key.as_pem()).hexdigest(),16))
+        return germ_node,germ_pem
+
     def insert_key(self,node_id,pub_key):
         c = self.key_db.cursor()
         c.execute('insert into keys (node_id,pub_key) values (?,?)',(node_id,pub_key))
         self.key_db.commit()
 
     def find_key(self,key):
-        logging.debug('check key '+str(key))
-        if len(str(key)) == 48:
-            c = self.key_db.cursor()
-            c.execute('select * from keys where node_id = ?',(str(key),))
-            key_struct = c.fetchone()
-            if key_struct == None:
-                logging.info('no key , need to fetch '+str(key))
-            else:
-                logging.debug('key structure :'+json.dumps(key_struct))
+        logging.debug('check database for key '+str(key))
+        c = self.key_db.cursor()
+        c.execute('select * from keys where node_id = ?',(str(key),))
+        key_struct = c.fetchone()
+        if key_struct == None:
+            logging.info('no key , need to fetch '+str(key))
+            return key_struct,False
+        else:
+            logging.info('found key '+str(key))
+            logging.error('find_key : need to check quality etc of key')
+            logging.debug('key structure :'+key_struct[1])
+            key_as_file = M2Crypto.BIO.MemoryBuffer(str(key_struct[1]))
+            key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
+            logging.info(key_obj)
+            return key_obj,True
 
     def dump(self):
         c = self.key_db.cursor()
@@ -89,6 +105,7 @@ class registration:
         except:
             logging.error('fail local key')
         self.key_store = key_store()
+
     
     def load_priv(self):
         self.priv = M2Crypto.RSA.load_key('keys/private.pem')
@@ -125,12 +142,13 @@ class registration:
 
     def check_origin(self,origin):
         logging.debug('check key '+str(origin))
-        key = self.key_store.find_key(origin)
-        if key != None:
+        key,status = self.key_store.find_key(origin)
+        if status == True:
             logging.info('key '+str(origin)+' exists')
             return key
         else:
             logging.error('no key '+str(origin))
+            #a = self.dht[str(origin)]
             raise KeyError
 
 #        if self.key_store.find_key(origin):

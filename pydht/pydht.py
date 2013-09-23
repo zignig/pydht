@@ -109,6 +109,9 @@ class DHT(object):
         if not id:
             id = random_id()
         self.reg = registry
+        #object swizzle , add DHT into registry
+        registry.dht = self
+
         self.peer = Peer(unicode(host), port, id)
         self.id = id
         self.data = {}

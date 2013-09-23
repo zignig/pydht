@@ -22,7 +22,6 @@ reg = register.registration()
 host,port = '',7000
 strap = 'bl3dr.com'
 d = DHT(host,port,reg,id=reg.node_id,boot_host=strap,boot_port=port)
-reg.d = d
 #post the public key up by it's own hash
 d[str(reg.node_id)] = reg.pub.as_pem()
 

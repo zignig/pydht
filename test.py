@@ -15,8 +15,6 @@ ch.setFormatter(formatter)
 
 logger.addHandler(ch)
 
-def breaker():
-    logging.info('=========================================')
 
 reg = register.registration()
 reg.load_priv()
@@ -33,6 +31,5 @@ print reg.verify_doc(a)
 #a['data'] = 'fnord'
 #print reg.verify_doc(a)
 
-breaker()
 keys = reg.key_store.dump()
 logging.info(keys)
