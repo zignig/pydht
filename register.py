@@ -44,7 +44,10 @@ class key_store:
             c = self.key_db.cursor()
             c.execute('select * from keys where node_id = ?',(str(key),))
             key_struct = c.fetchone()
-            logging.debug('key structure :'+json.dumps(key_struct))
+            if key_struct == None:
+                logging.info('no key , need to fetch '+str(key))
+            else:
+                logging.debug('key structure :'+json.dumps(key_struct))
 
     def dump(self):
         c = self.key_db.cursor()
@@ -143,6 +146,8 @@ class registration:
 
     def verify_doc(self,doc):
         logging.debug('verify doc')
+        if doc == None:
+            return None
         sdoc = doc.copy()
         if 'sig' in sdoc:
             sig = sdoc['sig']

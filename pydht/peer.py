@@ -7,7 +7,7 @@ import logging
 class Peer(object):
     ''' DHT Peer Information'''
     def __init__(self, host, port, id):
-        logging.info('create peer %s %s %s',host,str(port),str(id))
+        logging.debug('create peer %s %s %s',host,str(port),str(id))
         self.host, self.port, self.id = host, port, id
         
     def astriple(self):

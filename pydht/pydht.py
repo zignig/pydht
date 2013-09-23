@@ -163,8 +163,9 @@ class DHT(object):
         if hashed_key in self.data:
             return self.data[hashed_key]
         result = self.iterative_find_value(hashed_key)
-        if result:
-            return result
+        verified_doc = self.reg.verify_doc(result)
+        if verified_doc:
+            return verified_doc 
         raise KeyError
         
     def __setitem__(self, key, value):
