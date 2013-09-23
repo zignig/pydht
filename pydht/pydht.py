@@ -11,6 +11,7 @@ from .peer import Peer
 from .shortlist import Shortlist
 
 
+import logging 
 # set up redis aconnection
 global red
 try:
@@ -20,14 +21,6 @@ try:
 except:
     print 'no redis , user faker'
 
-
-#set uploagging 
-import logging 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-logger.addHandler(ch)
 
 # network spec
 k = 20
@@ -56,12 +49,17 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
                 self.handle_found_value(message)
             elif message_type == "store":
                 self.handle_store(message)
+            elif message_type == "register":
+                self.handle_register(message)
         except KeyError, ValueError:
             pass
         client_host, client_port = self.client_address
         peer_id = message["peer_id"]
         new_peer = Peer(client_host, client_port, peer_id)
         self.server.dht.buckets.insert(new_peer)
+
+    def handle_register(self,message):
+        logging.ERROR('register :'+str(message))
 
     def handle_ping(self, message):
         client_host, client_port = self.client_address
@@ -70,7 +68,7 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         peer.pong(socket=self.server.socket, peer_id=self.server.dht.peer.id, lock=self.server.send_lock)
         
     def handle_pong(self, message):
-        logger.info('pong'+str(message))
+        logging.info('pong'+str(message))
         pass
         
     def handle_find(self, message, find_value=False):
@@ -166,6 +164,7 @@ class DHT(object):
             logging.debug('bootstrapping host %s %s',boot_host,str(boot_port))
             boot_peer = Peer(boot_host, boot_port, 0)
             self.iterative_find_nodes(self.peer.id, boot_peer=boot_peer)
+            logging.error("Add in registration code here")
                     
     def __getitem__(self, key):
         hashed_key = hash_function(key)
