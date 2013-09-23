@@ -11,6 +11,7 @@ import hashlib
 import base64
 import sqlite3
 import StringIO
+import time
 
 import readline,rlcompleter
 
@@ -58,8 +59,8 @@ class key_store:
             return key_struct,False
         else:
             logging.info('found key '+str(key))
-            logging.error('find_key : need to check quality etc of key')
-            logging.debug('key structure :'+key_struct[1])
+            #logging.error('find_key : need to check quality etc of key')
+            logging.debug('key structure :'+json.dumps(key_struct))
             key_as_file = M2Crypto.BIO.MemoryBuffer(str(key_struct[1]))
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
             logging.info(key_obj)
@@ -110,11 +111,13 @@ class registration:
     def load_priv(self):
         self.priv = M2Crypto.RSA.load_key('keys/private.pem')
 
-    def gen_doc(self,doc):
+    def gen_doc(self,key,doc):
         logging.info('generate doc')
         made_doc = {}
         made_doc['origin'] = self.node_id
+        made_doc['key'] = key
         made_doc['data'] = doc
+        made_doc['timestamp'] = time.ctime()
         enc_js = json.dumps(made_doc,sort_keys=True,indent=1)
         logging.debug('doc to sign :'+enc_js)
         signer = M2Crypto.EVP.load_key('keys/private.pem')

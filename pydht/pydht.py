@@ -93,7 +93,8 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         
     def handle_store(self, message):
         key = message["id"]
-        logging.error("DHT:handle_store need to chek message before storing")
+        logging.error("DHT:handle_store need to check message before storing")
+        logging.info('storing '+str(key))
         self.server.dht.data[key] = message["value"]
 
 
@@ -115,9 +116,17 @@ class DHT(object):
         self.peer = Peer(unicode(host), port, id)
         self.id = id
         self.data = {}
+        self.keyref = {}
         self.buckets = BucketSet(k, id_bits, self.peer.id)
         self.rpc_ids = {} # should probably have a lock for this
-        self.server = DHTServer(self.peer.address(), DHTRequestHandler)
+        try:
+           logging.info('starting server on '+str(host)+':'+str(port))
+           self.server = DHTServer(self.peer.address(), DHTRequestHandler)
+        except:
+           logging.critical('starting server on '+str(host)+':'+str(port))
+           logging.critical('alternative port : '+str(port+1))
+           self.peer = Peer(unicode(host), port+1, hash_function('magic_local'))
+           self.server = DHTServer(self.peer.address(), DHTRequestHandler)
         self.server.dht = self
         self.server_thread = threading.Thread(target=self.server.serve_forever)
         self.server_thread.daemon = True
@@ -175,9 +184,10 @@ class DHT(object):
     def __setitem__(self, key, value):
         hashed_key = hash_function(key)
         nearest_nodes = self.iterative_find_nodes(hashed_key)
-        generated_doc = self.reg.gen_doc(value)
+        generated_doc = self.reg.gen_doc(key,value)
         if not nearest_nodes:
             self.data[hashed_key] = generated_doc 
+            self.keyref[key] = hashed_key
         for node in nearest_nodes:
             node.store(hashed_key, generated_doc, socket=self.server.socket, peer_id=self.peer.id)
         

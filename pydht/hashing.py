@@ -2,7 +2,7 @@ import hashlib
 import random
 
 id_bits = 128
-
+# TODO investigate other hash functions
 def hash_function(data):
     return int(hashlib.sha1(data).hexdigest(), 16)
     

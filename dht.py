@@ -5,6 +5,8 @@ import json,uuid,yaml
 import M2Crypto
 import register
 import logging
+import socket
+import sys
 
 # register logging 
 logger = logging.getLogger()
@@ -15,11 +17,17 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+def DEBUG():
+    ch.setLevel(logging.DEBUG)
+
+def ERROR():
+    ch.setLevel(logging.ERROR)
 
 #load node
+name_space = 'zignig'
+sys.ps1 = name_space+'>>>'
 reg = register.registration()
-
-host,port = '',7000
+host,port = socket.gethostbyname(socket.gethostname()),7000 
 strap = 'bl3dr.com'
 d = DHT(host,port,reg,id=reg.node_id,boot_host=strap,boot_port=port)
 #post the public key up by it's own hash
@@ -74,3 +82,5 @@ def save():
     f.write(json.dumps(d.data))
     f.close()
 
+if __name__ == "__main__":
+    pass
