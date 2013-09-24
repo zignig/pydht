@@ -170,7 +170,8 @@ class DHT(object):
         if reg_host and reg_port:
             logging.debug('registering to host %s %s',reg_host,str(reg_port))
             register_peer = Peer(reg_host, reg_port, 0)
-            register_peer.register(self.reg.node_id,socket=self.server.socket,peer_id=self.peer.id)
+            doc = self.reg.gen_doc(self.reg.node_id,self.reg.pub.as_pem())
+            register_peer.register(self.reg.node_id,doc,socket=self.server.socket,peer_id=self.peer.id)
 
     def bootstrap(self, boot_host, boot_port):
         if boot_host and boot_port:
