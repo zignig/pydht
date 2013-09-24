@@ -50,7 +50,8 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         self.server.dht.buckets.insert(new_peer)
 
     def handle_register(self,message):
-        logging.ERROR('register :'+str(message))
+        logging.error('register :'+json.dumps(message))
+        
 
     def handle_ping(self, message):
         client_host, client_port = self.client_address
@@ -169,7 +170,7 @@ class DHT(object):
         if reg_host and reg_port:
             logging.debug('registering to host %s %s',reg_host,str(reg_port))
             register_peer = Peer(reg_host, reg_port, 0)
-            register_peer.register(self.reg.node_id,socket=self.server.socket)
+            register_peer.register(self.reg.node_id,socket=self.server.socket,peer_id=self.peer.id)
 
     def bootstrap(self, boot_host, boot_port):
         if boot_host and boot_port:
