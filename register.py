@@ -52,7 +52,7 @@ class key_store:
     def find_key(self,key):
         logging.debug('check database for key '+str(key))
         c = self.key_db.cursor()
-        c.execute('select * from keys where node_id = ?',(str(key),))
+        c.execute('select * from keys where node_id = ? and score > 0',(str(key),))
         key_struct = c.fetchone()
         if key_struct == None:
             logging.info('no key , need to fetch '+str(key))

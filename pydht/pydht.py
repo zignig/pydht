@@ -132,6 +132,7 @@ class DHT(object):
         self.server_thread.daemon = True
         self.server_thread.start()
         self.bootstrap(unicode(boot_host), boot_port)
+        self.register(unicode(boot_host), boot_port)
     
     def iterative_find_nodes(self, key, boot_peer=None):
         shortlist = Shortlist(k, key)
@@ -164,6 +165,12 @@ class DHT(object):
             time.sleep(iteration_sleep)
         return shortlist.completion_result()
             
+    def register(self, reg_host, reg_port):
+        if reg_host and reg_port:
+            logging.debug('registering to host %s %s',reg_host,str(reg_port))
+            register_peer = Peer(reg_host, reg_port, 0)
+            register_peer.register(self.reg.node_id,socket=self.server.socket,peer_id='')
+
     def bootstrap(self, boot_host, boot_port):
         if boot_host and boot_port:
             logging.debug('bootstrapping host %s %s',boot_host,str(boot_port))
