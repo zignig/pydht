@@ -51,6 +51,7 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
 
     def handle_register(self,message):
         logging.error('register :'+json.dumps(message))
+        logging.info(message['value']['id'])
         
 
     def handle_ping(self, message):
