@@ -148,10 +148,10 @@ class registration:
     def fetch_key(self,origin):
         try:
             k = self.dht[str(origin)]
-            logger.error('key fetch returns '+json.dumps(k)) 
+            logger.info('found key from network '+str(k['origin']))
             key_as_file = M2Crypto.BIO.MemoryBuffer(str(k['data']))
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
-            self.temp_keys[str(k['origin'])] = key_obj 
+            self.temp_keys[k['origin']] = key_obj 
             return key_obj
         except:
             logger.error('key find fail on '+ str(origin))
@@ -159,18 +159,17 @@ class registration:
             
     def check_origin(self,origin):
         logger.debug('check key '+str(origin))
-        if origin in self.temp_keys:
-            return self.temp_keys[str(origin)]
+        key,status = self.key_store.find_key(origin)
+        if status == True:
+            logger.info('key '+str(origin)+' exists')
+            return key
         else:
-            key,status = self.key_store.find_key(origin)
-            if status == True:
-                logger.info('key '+str(origin)+' exists')
-                return key
+            logger.error('no key , fetching  '+str(origin))
+            if origin in self.temp_keys:
+                return self.temp_keys[origin]
             else:
-                logger.error('no key , fetching  '+str(origin))
                 return  self.fetch_key(origin)
-
-            #raise KeyError
+            raise MissingKey 
 
     def verify_doc(self,doc):
         logger.debug('verify doc')
