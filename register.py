@@ -53,8 +53,6 @@ class key_store:
                 self.insert_key(kn,kk)
         self.key_db.commit()
 
-
-
     def load_key(self,path='public_keys/germinate.key'):
         germ_key = M2Crypto.RSA.load_pub_key(path)
         germ_pem = germ_key.as_pem()
@@ -75,12 +73,12 @@ class key_store:
             logger.info('no key , need to fetch '+str(key))
             return key_struct,False
         else:
-            logger.info('found key '+str(key))
+            logger.debug('found key '+str(key))
             #logger.error('find_key : need to check quality etc of key')
             logger.debug('key structure :'+json.dumps(key_struct))
             key_as_file = M2Crypto.BIO.MemoryBuffer(str(key_struct[1]))
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
-            logger.info(key_obj)
+            logger.debug(key_obj)
             return key_obj,True
 
     def dump(self):
@@ -100,7 +98,7 @@ class registration:
     """
     def __init__(self,path='.'):
         self.key = None
-        self.known_keys = {}
+        self.temp_keys = {}
         try:
             os.stat('keys')
         except:
@@ -148,39 +146,31 @@ class registration:
         return made_doc 
    
     def fetch_key(self,origin):
-        logger.debug('fetch key '+str(origin))
-        path = 'public_keys/'+str(origin)+'.key'
         try:
-            os.stat(path)
-            key = M2Crypto.RSA.load_pub_key(path)
-            logger.debug('found key '+str(origin))
-            return True,key
+            k = self.dht[str(origin)]
+            logger.error('key fetch returns '+json.dumps(k)) 
+            key_as_file = M2Crypto.BIO.MemoryBuffer(str(k['data']))
+            key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
+            self.temp_keys[k['origin']] = key_obj 
+            return key_obj
         except:
-            logger.error('key fail for :'+str(origin))
-            logger.error('FETCH key out of DHT')
-            return False,''
-
+            logger.error('key find fail on '+ str(origin))
+            raise MissingKey
+            
     def check_origin(self,origin):
         logger.debug('check key '+str(origin))
-        key,status = self.key_store.find_key(origin)
-        if status == True:
-            logger.info('key '+str(origin)+' exists')
-            return key
+        if origin in self.temp_keys:
+            return temp_keys['origin']
         else:
-            logger.error('no key '+str(origin))
-            #a = self.dht[str(origin)]
-            raise KeyError
+            key,status = self.key_store.find_key(origin)
+            if status == True:
+                logger.info('key '+str(origin)+' exists')
+                return key
+            else:
+                logger.error('no key , fetching  '+str(origin))
+                return  self.fetch_key(origin)
 
-#        if self.key_store.find_key(origin):
-#            logger.debug('known origin '+str(origin))
-#            return self.known_keys[origin]
-#        else:
-#            status,key = self.fetch_key(origin)
-#        if status:
-#            self.known_keys[origin] = key
-#            return key
-#        else:
-#            raise ValueError
+            #raise KeyError
 
     def verify_doc(self,doc):
         logger.debug('verify doc')
@@ -202,9 +192,7 @@ class registration:
                 verify_evp.assign_rsa(key,capture=0)
                 verify_evp.verify_init()
                 verify_evp.verify_update(formatted_doc) 
-                logger.debug('final verify')
                 result = verify_evp.verify_final(dec_sig)
-                logger.info(result)
                 if result == 1:
                     logger.info('Correctly Decoded')
                     return doc

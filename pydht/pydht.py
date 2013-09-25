@@ -50,9 +50,10 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         self.server.dht.buckets.insert(new_peer)
 
     def handle_register(self,message):
-        logger.debug('register :'+json.dumps(message))
+        logger.info('register :'+json.dumps(message))
         id = message['value']['origin']
         key = message['value']['data']
+        self.server.dht[str(id)] = key
         self.server.dht.keyspool.append((id,key))
 
     def handle_ping(self, message):
