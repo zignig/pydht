@@ -12,7 +12,7 @@ import sys
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 ch.setFormatter(formatter)
 logger.addHandler(ch)
@@ -22,6 +22,9 @@ def DEBUG():
 
 def ERROR():
     ch.setLevel(logging.ERROR)
+
+def INFO():
+    ch.setLevel(logging.INFO)
 
 #load node
 name_space = 'zignig'

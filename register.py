@@ -12,6 +12,7 @@ import base64
 import sqlite3
 import StringIO
 import time
+import os
 
 import readline,rlcompleter
 
@@ -26,29 +27,43 @@ class key_store:
     CREATE TABLE keys (node_id text,pub_key text,pub_doc,timestamp int,score int);
     CREATE TABLE nodes (node_tripple text,timestamp int,quality int);
     """
-    def __init__(self,path='public_keys/key.sdb'):
+
+    def __init__(self,path='public_keys',name='keys.sdb'):
+        db_path = path+os.sep+name
         try:
-            os.stat('public_keys/key.sdb')
-            self.key_db = sqlite3.connect(path)
+            os.stat(db_path)
+            self.path = path
+            self.key_db = sqlite3.connect(db_path)
         except:
-            logger.info('create key store '+path)
-            self.key_db = sqlite3.connect(path)
+            logger.info('create key store '+db_path)
+            self.key_db = sqlite3.connect(db_path)
             c = self.key_db.cursor()
             c.executescript(self.base_schema)
             self.key_db.commit()
-            logger.info('loading germination key')
-            gn,gp = self.load_germinator()
-            self.insert_key(gn,gp)
+            logger.info('loading public keys')
+            self.load_keys()
        
-    def load_germinator(self,path='public_keys/germinate.key'):
+
+    def load_keys(self):
+        li = os.listdir('public_keys/')
+        for i in li:
+            if i[-3:] == 'key':
+                logger.info('loading key '+i)
+                kn,kk = self.load_key('public_keys/'+i)
+                self.insert_key(kn,kk)
+        self.key_db.commit()
+
+
+
+    def load_key(self,path='public_keys/germinate.key'):
         germ_key = M2Crypto.RSA.load_pub_key(path)
         germ_pem = germ_key.as_pem()
         germ_node = str(int(hashlib.sha1(germ_key.as_pem()).hexdigest(),16))
         return germ_node,germ_pem
 
-    def insert_key(self,node_id,pub_key):
+    def insert_key(self,node_id,pub_key,score=1):
         c = self.key_db.cursor()
-        c.execute('insert into keys (node_id,pub_key) values (?,?)',(node_id,pub_key))
+        c.execute('insert into keys (node_id,pub_key,score) values (?,?,?)',(node_id,pub_key,score))
         self.key_db.commit()
 
     def find_key(self,key):
