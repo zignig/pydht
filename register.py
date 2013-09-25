@@ -6,7 +6,7 @@
 
 import M2Crypto
 import json,string,os
-import logging
+import logging 
 import hashlib
 import base64
 import sqlite3
@@ -17,6 +17,8 @@ import readline,rlcompleter
 
 base_schema = ""
 readline.parse_and_bind('tab:complete')
+
+logger = logging.getLogger(__name__)
 
 class key_store:
     "sqlite storage for known keys"
@@ -29,12 +31,12 @@ class key_store:
             os.stat('public_keys/key.sdb')
             self.key_db = sqlite3.connect(path)
         except:
-            logging.info('create key store '+path)
+            logger.info('create key store '+path)
             self.key_db = sqlite3.connect(path)
             c = self.key_db.cursor()
             c.executescript(self.base_schema)
             self.key_db.commit()
-            logging.info('loading germination key')
+            logger.info('loading germination key')
             gn,gp = self.load_germinator()
             self.insert_key(gn,gp)
        
@@ -50,20 +52,20 @@ class key_store:
         self.key_db.commit()
 
     def find_key(self,key):
-        logging.debug('check database for key '+str(key))
+        logger.debug('check database for key '+str(key))
         c = self.key_db.cursor()
         c.execute('select * from keys where node_id = ? and score > 0',(str(key),))
         key_struct = c.fetchone()
         if key_struct == None:
-            logging.info('no key , need to fetch '+str(key))
+            logger.info('no key , need to fetch '+str(key))
             return key_struct,False
         else:
-            logging.info('found key '+str(key))
-            #logging.error('find_key : need to check quality etc of key')
-            logging.debug('key structure :'+json.dumps(key_struct))
+            logger.info('found key '+str(key))
+            #logger.error('find_key : need to check quality etc of key')
+            logger.debug('key structure :'+json.dumps(key_struct))
             key_as_file = M2Crypto.BIO.MemoryBuffer(str(key_struct[1]))
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
-            logging.info(key_obj)
+            logger.info(key_obj)
             return key_obj,True
 
     def dump(self):
@@ -87,13 +89,13 @@ class registration:
         try:
             os.stat('keys')
         except:
-            logging.info('create keys folder')
+            logger.info('create keys folder')
             os.mkdir('keys')
         try:
             os.stat('keys/private.pem')
             os.stat('keys/public.key')
         except:
-            logging.info('generating new private key')
+            logger.info('generating new private key')
             key = M2Crypto.RSA.gen_key(1024,65537)
             key.save_key('keys/private.pem',cipher=None)
             #key.save_key('keys/private.pem')
@@ -102,9 +104,9 @@ class registration:
             os.stat('keys/public.key')
             self.pub = M2Crypto.RSA.load_pub_key('keys/public.key') 
             self.node_id = int(hashlib.sha1(self.pub.as_pem()).hexdigest(),16)
-            logging.info('set id '+str(self.node_id))
+            logger.info('set id '+str(self.node_id))
         except:
-            logging.error('fail local key')
+            logger.error('fail local key')
         self.key_store = key_store()
 
     
@@ -112,50 +114,50 @@ class registration:
         self.priv = M2Crypto.RSA.load_key('keys/private.pem')
 
     def gen_doc(self,key,doc):
-        logging.info('generate doc')
+        logger.info('generate doc')
         made_doc = {}
         made_doc['origin'] = self.node_id
         made_doc['key'] = key
         made_doc['data'] = doc
         made_doc['timestamp'] = time.ctime()
         enc_js = json.dumps(made_doc,sort_keys=True,indent=1)
-        logging.debug('doc to sign :'+enc_js)
+        logger.debug('doc to sign :'+enc_js)
         signer = M2Crypto.EVP.load_key('keys/private.pem')
         signer.sign_init()
         signer.sign_update(enc_js)
         sig = signer.sign_final()
         b64_sig = base64.b64encode(sig)
-        logging.debug(hashlib.sha1(enc_js).hexdigest())
+        logger.debug(hashlib.sha1(enc_js).hexdigest())
         made_doc['sig'] = b64_sig
-        logging.debug('base sig : '+b64_sig)
+        logger.debug('base sig : '+b64_sig)
         return made_doc 
    
     def fetch_key(self,origin):
-        logging.debug('fetch key '+str(origin))
+        logger.debug('fetch key '+str(origin))
         path = 'public_keys/'+str(origin)+'.key'
         try:
             os.stat(path)
             key = M2Crypto.RSA.load_pub_key(path)
-            logging.debug('found key '+str(origin))
+            logger.debug('found key '+str(origin))
             return True,key
         except:
-            logging.error('key fail for :'+str(origin))
-            logging.error('FETCH key out of DHT')
+            logger.error('key fail for :'+str(origin))
+            logger.error('FETCH key out of DHT')
             return False,''
 
     def check_origin(self,origin):
-        logging.debug('check key '+str(origin))
+        logger.debug('check key '+str(origin))
         key,status = self.key_store.find_key(origin)
         if status == True:
-            logging.info('key '+str(origin)+' exists')
+            logger.info('key '+str(origin)+' exists')
             return key
         else:
-            logging.error('no key '+str(origin))
+            logger.error('no key '+str(origin))
             #a = self.dht[str(origin)]
             raise KeyError
 
 #        if self.key_store.find_key(origin):
-#            logging.debug('known origin '+str(origin))
+#            logger.debug('known origin '+str(origin))
 #            return self.known_keys[origin]
 #        else:
 #            status,key = self.fetch_key(origin)
@@ -166,31 +168,31 @@ class registration:
 #            raise ValueError
 
     def verify_doc(self,doc):
-        logging.debug('verify doc')
+        logger.debug('verify doc')
         if doc == None:
             return None
         sdoc = doc.copy()
         if 'sig' in sdoc:
             sig = sdoc['sig']
             del sdoc['sig']
-            logging.debug('has sig  : '+sig)
+            logger.debug('has sig  : '+sig)
             dec_sig = base64.b64decode(sig)
-            logging.debug(doc)
+            logger.debug(doc)
             if 'origin' in sdoc:
                 key = self.check_origin(sdoc['origin'])
                 formatted_doc = json.dumps(sdoc,sort_keys=True,indent=1)
-                logging.debug('doc to check :'+formatted_doc)
-                logging.debug(hashlib.sha1(formatted_doc).hexdigest())
+                logger.debug('doc to check :'+formatted_doc)
+                logger.debug(hashlib.sha1(formatted_doc).hexdigest())
                 verify_evp = M2Crypto.EVP.PKey()
                 verify_evp.assign_rsa(key,capture=0)
                 verify_evp.verify_init()
                 verify_evp.verify_update(formatted_doc) 
-                logging.debug('final verify')
+                logger.debug('final verify')
                 result = verify_evp.verify_final(dec_sig)
-                logging.info(result)
+                logger.info(result)
                 if result == 1:
-                    logging.info('Correctly Decoded')
+                    logger.info('Correctly Decoded')
                     return doc
                 else:
-                    logging.error('Failed verify')
+                    logger.error('Failed verify')
             raise ValueError

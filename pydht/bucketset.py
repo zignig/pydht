@@ -4,6 +4,7 @@ import threading
 from .peer import Peer
 import logging 
 
+logger = logging.getLogger(__name__)
 
 def largest_differing_bit(value1, value2):
     distance = value1 ^ value2
@@ -15,7 +16,7 @@ def largest_differing_bit(value1, value2):
 
 class BucketSet(object):
     def __init__(self, bucket_size, buckets, id):
-        logging.info('create bucket set')
+        logger.info('create bucket set')
         self.id = id
         self.bucket_size = bucket_size
         self.buckets = [list() for _ in range(buckets)]
@@ -31,7 +32,7 @@ class BucketSet(object):
                     bucket.pop(bucket.index(peer_triple))
                 elif len(bucket) >= self.bucket_size:
                     bucket.pop(0)
-                logging.debug('add %s to bucket %s',str(peer_triple),str(bucket_number))
+                logger.debug('add %s to bucket %s',str(peer_triple),str(bucket_number))
                 bucket.append(peer_triple)
                 
     def nearest_nodes(self, key, limit=None):

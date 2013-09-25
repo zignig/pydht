@@ -2,12 +2,13 @@ import hashlib
 import json
 
 from .hashing import hash_function
-import logging
+import logging 
+logger = logging.getLogger(__name__)
 
 class Peer(object):
     ''' DHT Peer Information'''
     def __init__(self, host, port, id):
-        logging.debug('create peer %s %s %s',host,str(port),str(id))
+        logger.debug('create peer %s %s %s',host,str(port),str(id))
         self.host, self.port, self.id = host, port, id
         
     def astriple(self):
@@ -42,7 +43,7 @@ class Peer(object):
         self._sendmessage(message, socket, peer_id=peer_id, lock=lock)
         
     def register(self, key,value,socket=None, peer_id=None, lock=None):
-        logging.error('PEER: logging needs more work')
+        logger.error('PEER: logger needs more work')
         message = {
             "message_type": "register",
             "id": key,

@@ -11,8 +11,8 @@ from .peer import Peer
 from .shortlist import Shortlist
 
 
-import logging 
-
+import logging
+logger = logging.getLogger(__name__)
 # network spec
 k = 20
 alpha = 3
@@ -24,7 +24,7 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         try:
             message = json.loads(self.request[0].strip())
-            logging.debug(message)
+            logger.debug(message)
             message_type = message["message_type"]
             if message_type == "ping":
                 self.handle_ping(message)
@@ -50,9 +50,10 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         self.server.dht.buckets.insert(new_peer)
 
     def handle_register(self,message):
-        logging.error('register :'+json.dumps(message))
-        logging.info(message['value']['id'])
-        
+        logger.debug('register :'+json.dumps(message))
+        id = message['value']['origin']
+        key = message['value']['data']
+        self.server.dht.keyspool.append((id,key))
 
     def handle_ping(self, message):
         client_host, client_port = self.client_address
@@ -61,7 +62,7 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         peer.pong(socket=self.server.socket, peer_id=self.server.dht.peer.id, lock=self.server.send_lock)
         
     def handle_pong(self, message):
-        logging.info('pong'+str(message))
+        logger.info('pong'+str(message))
         pass
         
     def handle_find(self, message, find_value=False):
@@ -95,20 +96,20 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         
     def handle_store(self, message):
         key = message["id"]
-        logging.error("DHT:handle_store need to check message before storing")
-        logging.info('storing '+str(key))
+        logger.error("DHT:handle_store need to check message before storing")
+        logger.info('storing '+str(key))
         self.server.dht.data[key] = message["value"]
 
 
 class DHTServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
     def __init__(self, host_address, handler_cls):
-        logging.info('create server')
+        logger.info('create server')
         SocketServer.UDPServer.__init__(self, host_address, handler_cls)
         self.send_lock = threading.Lock()
 
 class DHT(object):
     def __init__(self, host, port,registry,id=None, boot_host=None, boot_port=None):
-        logging.info('create dht object')
+        logger.info('create dht object')
         if not id:
             id = random_id()
         self.reg = registry
@@ -119,14 +120,15 @@ class DHT(object):
         self.id = id
         self.data = {}
         self.keyref = {}
+        self.keyspool = []
         self.buckets = BucketSet(k, id_bits, self.peer.id)
         self.rpc_ids = {} # should probably have a lock for this
         try:
-           logging.info('starting server on '+str(host)+':'+str(port))
+           logger.info('starting server on '+str(host)+':'+str(port))
            self.server = DHTServer(self.peer.address(), DHTRequestHandler)
         except:
-           logging.critical('starting server on '+str(host)+':'+str(port))
-           logging.critical('alternative port : '+str(port+1))
+           logger.critical('starting server on '+str(host)+':'+str(port))
+           logger.critical('alternative port : '+str(port+1))
            self.peer = Peer(unicode(host), port+1, hash_function('magic_local'))
            self.server = DHTServer(self.peer.address(), DHTRequestHandler)
         self.server.dht = self
@@ -169,17 +171,17 @@ class DHT(object):
             
     def register(self, reg_host, reg_port):
         if reg_host and reg_port:
-            logging.debug('registering to host %s %s',reg_host,str(reg_port))
+            logger.debug('registering to host %s %s',reg_host,str(reg_port))
             register_peer = Peer(reg_host, reg_port, 0)
             doc = self.reg.gen_doc(self.reg.node_id,self.reg.pub.as_pem())
             register_peer.register(self.reg.node_id,doc,socket=self.server.socket,peer_id=self.peer.id)
 
     def bootstrap(self, boot_host, boot_port):
         if boot_host and boot_port:
-            logging.debug('bootstrapping host %s %s',boot_host,str(boot_port))
+            logger.debug('bootstrapping host %s %s',boot_host,str(boot_port))
             boot_peer = Peer(boot_host, boot_port, 0)
             self.iterative_find_nodes(self.peer.id, boot_peer=boot_peer)
-            logging.error("Add in registration code here")
+            logger.error("Add in registration code here")
                     
     def __getitem__(self, key):
         hashed_key = hash_function(key)
