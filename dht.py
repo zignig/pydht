@@ -31,7 +31,7 @@ name_space = 'zignig'
 sys.ps1 = name_space+'>>>'
 reg = register.registration()
 host,port = '',7000 
-strap = '192.168.1.89'
+strap = '192.168.1.55'
 d = DHT(host,port,reg,id=reg.node_id,boot_host=strap,boot_port=port)
 
 
