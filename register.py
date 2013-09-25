@@ -70,7 +70,6 @@ class key_store:
         c.execute('select * from keys where node_id = ? and score > 0',(str(key),))
         key_struct = c.fetchone()
         if key_struct == None:
-            logger.info('no key , need to fetch '+str(key))
             return key_struct,False
         else:
             logger.debug('found key '+str(key))
@@ -151,7 +150,7 @@ class registration:
             logger.info('found key from network '+str(k['origin']))
             key_as_file = M2Crypto.BIO.MemoryBuffer(str(k['data']))
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
-            #self.temp_keys[k['origin']] = key_obj 
+            self.temp_keys[origin] = key_obj 
             return key_obj
         except:
             logger.error('key find fail on '+ str(origin))
@@ -164,10 +163,10 @@ class registration:
             logger.info('key '+str(origin)+' exists')
             return key
         else:
-            logger.error('no key , fetching  '+str(origin))
             if origin in self.temp_keys:
                 return self.temp_keys[origin]
             else:
+                logger.error('no key , fetching  '+str(origin))
                 return  self.fetch_key(origin)
             raise MissingKey 
 
