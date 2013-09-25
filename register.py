@@ -151,7 +151,7 @@ class registration:
             logger.info('found key from network '+str(k['origin']))
             key_as_file = M2Crypto.BIO.MemoryBuffer(str(k['data']))
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
-            self.temp_keys[k['origin']] = key_obj 
+            #self.temp_keys[k['origin']] = key_obj 
             return key_obj
         except:
             logger.error('key find fail on '+ str(origin))
@@ -197,4 +197,5 @@ class registration:
                     return doc
                 else:
                     logger.error('Failed verify')
+                    logger.error(formatted_doc)
             raise ValueError
