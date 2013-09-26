@@ -3,6 +3,12 @@ this is a fork for the ttn
 
 http://thingtracker.net
 
+INSTALL
+=========
+
+need to installl the following python libraries
+
+apscheduler , m2crypto , yaml 
 
 pydht
 ==========
