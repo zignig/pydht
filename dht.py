@@ -35,7 +35,6 @@ reg = register.registration()
 host,port = '',7000 
 strap = 'bl3dr.com'
 d = DHT(host,port,reg,id=reg.node_id,boot_host=strap,boot_port=port)
-d['/']
 scheduler.bind_jobs(d)
 nodes = d.iterative_find_nodes(2)
 print nodes
