@@ -12,7 +12,8 @@ import base64
 import sqlite3
 import StringIO
 import time
-import os
+import os,sys
+import traceback
 
 import readline,rlcompleter
 
@@ -32,7 +33,7 @@ class key_store:
         db_path = path+os.sep+name
         try:
             os.stat(db_path)
-            self.path = path
+            self.path = db_path
             self.key_db = sqlite3.connect(db_path)
         except:
             logger.info('create key store '+db_path)
@@ -60,9 +61,11 @@ class key_store:
         return germ_node,germ_pem
 
     def insert_key(self,node_id,pub_key,score=1):
-        c = self.key_db.cursor()
+        conn = sqlite3.connect(self.path)
+        c = conn.cursor()
         c.execute('insert into keys (node_id,pub_key,score) values (?,?,?)',(node_id,pub_key,score))
-        self.key_db.commit()
+        conn.commit()
+        conn.close()
 
     def find_key(self,key):
         logger.debug('check database for key '+str(key))
@@ -72,7 +75,7 @@ class key_store:
         if key_struct == None:
             return key_struct,False
         else:
-            logger.debug('found key '+str(key))
+            logger.debug('found key in database '+str(key))
             #logger.error('find_key : need to check quality etc of key')
             logger.debug('key structure :'+json.dumps(key_struct))
             key_as_file = M2Crypto.BIO.MemoryBuffer(str(key_struct[1]))
@@ -98,6 +101,7 @@ class registration:
     def __init__(self,path='.'):
         self.key = None
         self.temp_keys = {}
+        self.keystack = []
         try:
             os.stat('keys')
         except:
@@ -147,12 +151,17 @@ class registration:
     def fetch_key(self,origin):
         try:
             k = self.dht[str(origin)]
-            logger.info('found key from network '+str(k['origin']))
+            logger.info('found key from network '+str(origin))
             key_as_file = M2Crypto.BIO.MemoryBuffer(str(k['data']))
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
             self.temp_keys[origin] = key_obj 
+            self.dht.reg.key_store.insert_key(str(origin),k['data'])
             return key_obj
         except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logger.critical(exc_type)
+            logger.critical(exc_value)
+            logger.critical(exc_traceback)
             logger.error('key find fail on '+ str(origin))
             raise MissingKey
             
@@ -197,4 +206,6 @@ class registration:
                 else:
                     logger.error('Failed verify')
                     logger.error(formatted_doc)
+
             raise ValueError
+        raise ValueError

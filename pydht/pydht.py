@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 k = 20
 alpha = 3
 id_bits = 160
-iteration_sleep = 0.1 # more aggressive iteration
+iteration_sleep = 1 # more aggressive iteration
 
 class DHTRequestHandler(SocketServer.BaseRequestHandler):
 
