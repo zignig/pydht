@@ -37,6 +37,7 @@ class key_store:
             self.key_db = sqlite3.connect(db_path)
         except:
             logger.info('create key store '+db_path)
+            self.path = db_path
             self.key_db = sqlite3.connect(db_path)
             c = self.key_db.cursor()
             c.executescript(self.base_schema)
