@@ -7,6 +7,7 @@ import register
 import logging
 import socket
 import sys
+import tools
 
 import scheduler
 
@@ -29,7 +30,7 @@ def INFO():
     ch.setLevel(logging.INFO)
 
 #load node
-name_space = 'zignig'
+name_space = 'name_space'
 sys.ps1 = name_space+'>>>'
 reg = register.registration()
 host,port = '',7000 

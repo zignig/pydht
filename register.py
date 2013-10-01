@@ -26,6 +26,7 @@ class key_store:
     "sqlite storage for known keys"
     base_schema = """
     CREATE TABLE keys (node_id text,pub_key text,pub_doc,timestamp int,score int);
+    CREATE TABLE docs (key text,doc text,timestamp int);
     CREATE TABLE nodes (node_tripple text,timestamp int,quality int);
     """
 
@@ -90,6 +91,24 @@ class key_store:
         r = c.fetchall()
         return r 
 
+    def insert_doc(self,key,doc):
+        data = doc['data']
+        key2 = doc['key']
+        conn = sqlite3.connect(self.path)
+        c = conn.cursor()
+        c.execute('insert into docs (key,doc,timestamp) values (?,?,?)',(str(key2),json.dumps(doc),time.time()))
+        conn.commit()
+        conn.close()
+
+    def dump_docs(self):
+        conn = sqlite3.connect(self.path)
+        c = conn.cursor()
+        c.execute('select * from docs')
+        d = c.fetchall()
+        conn.commit()
+        conn.close()
+        return d 
+
 def password_callback(*args,**kwds):
     return 
 
@@ -136,7 +155,7 @@ class registration:
         made_doc['origin'] = self.node_id
         made_doc['key'] = key
         made_doc['data'] = doc
-        made_doc['timestamp'] = time.ctime()
+        made_doc['timestamp'] = time.time()
         enc_js = json.dumps(made_doc,sort_keys=True,indent=1)
         logger.debug('doc to sign :'+enc_js)
         signer = M2Crypto.EVP.load_key('keys/private.pem')
@@ -156,6 +175,8 @@ class registration:
             key_as_file = M2Crypto.BIO.MemoryBuffer(str(k['data']))
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
             self.temp_keys[origin] = key_obj 
+            self.keystack.append((origin,key_obj))
+            logger.error(self.keystack)
             self.dht.reg.key_store.insert_key(str(origin),k['data'])
             return key_obj
         except:
@@ -203,10 +224,10 @@ class registration:
                 result = verify_evp.verify_final(dec_sig)
                 if result == 1:
                     logger.info('Correctly Decoded')
+                    
                     return doc
                 else:
                     logger.error('Failed verify')
                     logger.error(formatted_doc)
-
             raise ValueError
         raise ValueError

@@ -182,7 +182,6 @@ class DHT(object):
             logger.debug('bootstrapping host %s %s',boot_host,str(boot_port))
             boot_peer = Peer(boot_host, boot_port, 0)
             self.iterative_find_nodes(self.peer.id, boot_peer=boot_peer)
-            logger.error("Add in registration code here")
                     
     def __getitem__(self, key):
         hashed_key = hash_function(key)
@@ -191,9 +190,21 @@ class DHT(object):
         result = self.iterative_find_value(hashed_key)
         verified_doc = self.reg.verify_doc(result)
         if verified_doc:
+            self.reg.key_store.insert_doc(hashed_key,verified_doc)
             return verified_doc 
         raise KeyError
         
+    def post_item(self,key,value):
+        " raw post , with out encoding "
+        hashed_key = hash_function(key)
+        nearest_nodes = self.iterative_find_nodes(hashed_key)
+        generated_doc = value
+        if not nearest_nodes:
+            self.data[hashed_key] = generated_doc 
+            self.keyref[key] = hashed_key
+        for node in nearest_nodes:
+            node.store(hashed_key, generated_doc, socket=self.server.socket, peer_id=self.peer.id)
+
     def __setitem__(self, key, value):
         hashed_key = hash_function(key)
         nearest_nodes = self.iterative_find_nodes(hashed_key)
