@@ -96,9 +96,20 @@ class key_store:
         key2 = doc['key']
         conn = sqlite3.connect(self.path)
         c = conn.cursor()
-        c.execute('insert into docs (key,doc,timestamp) values (?,?,?)',(str(key2),json.dumps(doc),time.time()))
+        c.execute('insert into docs (key,doc,timestamp) values (?,?,?)',(str(key),json.dumps(doc),time.time()))
         conn.commit()
         conn.close()
+
+    def get_doc(self,key):
+        conn = sqlite3.connect(self.path)
+        c = conn.cursor()
+        c.execute('select doc from docs where key = ?',(str(key),))
+        doc = c.fetchone()
+        conn.commit()
+        conn.close()
+        if doc == None:
+            return None
+        return json.loads(str(doc[0]))
 
     def dump_docs(self):
         conn = sqlite3.connect(self.path)
@@ -107,7 +118,7 @@ class key_store:
         d = c.fetchall()
         conn.commit()
         conn.close()
-        return d 
+        return d
 
 def password_callback(*args,**kwds):
     return 

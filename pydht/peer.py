@@ -34,6 +34,7 @@ class Peer(object):
         message = {
             "message_type": "ping"
         }
+        logger.error('ping '+str(message))
         self._sendmessage(message, socket, peer_id=peer_id, lock=lock)
         
     def pong(self, socket=None, peer_id=None, lock=None):

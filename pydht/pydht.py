@@ -100,6 +100,7 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         logger.error("DHT:handle_store need to check message before storing")
         logger.info('storing '+str(key))
         self.server.dht.data[key] = message["value"]
+        self.server.dht.reg.key_store.insert_doc(str(key),message["value"])
 
 
 class DHTServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
