@@ -99,8 +99,12 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         key = message["id"]
         logger.error("DHT:handle_store need to check message before storing")
         logger.info('storing '+str(key))
-        self.server.dht.data[key] = message["value"]
-        self.server.dht.reg.key_store.insert_doc(str(key),message["value"])
+        verified_doc = self.server.dht.reg.verify_doc(message['value'])
+        if verified_doc:
+            self.server.dht.data[key] = message["value"]
+            self.server.dht.reg.key_store.insert_doc(str(key),message["value"])
+        else:
+            raise ValueError
 
 
 class DHTServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):

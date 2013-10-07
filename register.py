@@ -71,7 +71,9 @@ class key_store:
 
     def find_key(self,key):
         logger.debug('check database for key '+str(key))
-        c = self.key_db.cursor()
+        conn = sqlite3.connect(self.path)
+        c = conn.cursor()
+        c = conn.cursor()
         c.execute('select * from keys where node_id = ? and score > 0',(str(key),))
         key_struct = c.fetchone()
         if key_struct == None:
@@ -84,6 +86,8 @@ class key_store:
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
             logger.debug(key_obj)
             return key_obj,True
+        conn.commit()
+        conn.close()
 
     def dump(self):
         c = self.key_db.cursor()
