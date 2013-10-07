@@ -195,9 +195,8 @@ class DHT(object):
             return verified_doc 
         raise KeyError
         
-    def post_item(self,key,value):
+    def post_item(self,hashed_key,value):
         " raw post , with out encoding "
-        hashed_key = hash_function(key)
         nearest_nodes = self.iterative_find_nodes(hashed_key)
         generated_doc = value
         if not nearest_nodes:
