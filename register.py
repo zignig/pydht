@@ -170,7 +170,7 @@ class registration:
         made_doc['origin'] = self.node_id
         made_doc['key'] = key
         made_doc['data'] = doc
-        made_doc['timestamp'] = time.time()
+        made_doc['timestamp'] = time.ctime()
         enc_js = json.dumps(made_doc,sort_keys=True,indent=1)
         logger.debug('doc to sign :'+enc_js)
         signer = M2Crypto.EVP.load_key('keys/private.pem')
