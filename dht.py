@@ -15,7 +15,7 @@ import scheduler
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 ch.setFormatter(formatter)
 logger.addHandler(ch)
@@ -79,6 +79,15 @@ def load_data(d):
     except:
         print 'fail'
 
+
+
+def walk_test(path='/'):
+    logger.error('walk - '+path)
+    t = d[path]['data']
+    logger.error('subwalk - '+str(t))
+    if type(t) == type([]):
+        for i in t:
+            walk_test(path+'/'+i)
 
 #load_data(d)
 

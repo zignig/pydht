@@ -4,10 +4,23 @@ base:
       zignig:
         'http://couch.bl3dr.com/zignig'
     library:
+      metric:
+        nut:
+        bolt:
+        caphead:
+        washer:
       mechanical:
+        hinge:
       bearing:
       motors:
+        hobby:
+        stepper:
+          nema17:
+          nema24:
     snippit:
+      blah:
+        blah1:
+        blah2:
   testing:
     unit: 'unit test'
     stress: 'stress test'

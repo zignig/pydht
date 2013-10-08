@@ -196,6 +196,7 @@ class DHT(object):
         verified_doc = self.reg.verify_doc(result)
         if verified_doc:
             self.reg.key_store.insert_doc(hashed_key,verified_doc)
+            self.data[hashed_key] = verified_doc
             return verified_doc 
         raise KeyError
         
