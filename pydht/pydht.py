@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 k = 20
 alpha = 3
 id_bits = 160
-iteration_sleep = 1 # more aggressive iteration
+iteration_sleep = 0.1 # more aggressive iteration
 
 class DHTRequestHandler(SocketServer.BaseRequestHandler):
 
@@ -102,7 +102,7 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         verified_doc = self.server.dht.reg.verify_doc(message['value'])
         if verified_doc:
             self.server.dht.data[key] = verified_doc 
-            self.server.dht.reg.key_store.insert_doc(str(key),verified_doc)
+            self.server.dht.reg.doc_store.insert_doc(str(key),verified_doc)
         else:
             raise ValueError
 
@@ -187,18 +187,21 @@ class DHT(object):
             logger.debug('bootstrapping host %s %s',boot_host,str(boot_port))
             boot_peer = Peer(boot_host, boot_port, 0)
             self.iterative_find_nodes(self.peer.id, boot_peer=boot_peer)
-                    
-    def __getitem__(self, key):
+
+    def get(self, key):
         hashed_key = hash_function(key)
         if hashed_key in self.data:
             return self.reg.verify_doc(self.data[hashed_key])
         result = self.iterative_find_value(hashed_key)
         verified_doc = self.reg.verify_doc(result)
         if verified_doc:
-            self.reg.key_store.insert_doc(hashed_key,verified_doc)
+            self.reg.doc_store.insert_doc(hashed_key,verified_doc)
             self.data[hashed_key] = verified_doc
-            return verified_doc 
+            return verified_doc
         raise KeyError
+
+    def __getitem__(self,key):
+        return self.get(key)['data']
         
     def post_item(self,hashed_key,value):
         " raw post , with out encoding "

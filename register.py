@@ -14,6 +14,7 @@ import StringIO
 import time
 import os,sys
 import traceback
+import storage
 
 import readline,rlcompleter
 
@@ -26,7 +27,6 @@ class key_store:
     "sqlite storage for known keys"
     base_schema = """
     CREATE TABLE keys (node_id text,pub_key text,pub_doc,timestamp int,score int);
-    CREATE TABLE docs (key text,doc text,timestamp int);
     CREATE TABLE nodes (node_tripple text,timestamp int,quality int);
     """
 
@@ -95,35 +95,6 @@ class key_store:
         r = c.fetchall()
         return r 
 
-    def insert_doc(self,key,doc):
-        data = doc['data']
-        key2 = doc['key']
-        conn = sqlite3.connect(self.path)
-        c = conn.cursor()
-        c.execute('insert into docs (key,doc,timestamp) values (?,?,?)',(str(key),json.dumps(doc),time.time()))
-        conn.commit()
-        conn.close()
-
-    def get_doc(self,key):
-        conn = sqlite3.connect(self.path)
-        c = conn.cursor()
-        c.execute('select doc from docs where key = ?',(str(key),))
-        doc = c.fetchone()
-        conn.commit()
-        conn.close()
-        if doc == None:
-            return None
-        return json.loads(str(doc[0]))
-
-    def dump_docs(self):
-        conn = sqlite3.connect(self.path)
-        c = conn.cursor()
-        c.execute('select * from docs')
-        d = c.fetchall()
-        conn.commit()
-        conn.close()
-        return d
-
 def password_callback(*args,**kwds):
     return 
 
@@ -159,7 +130,7 @@ class registration:
         except:
             logger.error('fail local key')
         self.key_store = key_store()
-
+        self.doc_store = storage.doc_store()
     
     def load_priv(self):
         self.priv = M2Crypto.RSA.load_key('keys/private.pem')
@@ -170,7 +141,7 @@ class registration:
         made_doc['origin'] = self.node_id
         made_doc['key'] = key
         made_doc['data'] = doc
-        made_doc['timestamp'] = time.ctime()
+        made_doc['timestamp'] = int(time.time())
         enc_js = json.dumps(made_doc,sort_keys=True,indent=1)
         logger.debug('doc to sign :'+enc_js)
         signer = M2Crypto.EVP.load_key('keys/private.pem')
@@ -185,7 +156,7 @@ class registration:
    
     def fetch_key(self,origin):
         try:
-            k = self.dht[str(origin)]
+            k = self.dht.get(str(origin))
             logger.info('found key from network '+str(origin))
             key_as_file = M2Crypto.BIO.MemoryBuffer(str(k['data']))
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)

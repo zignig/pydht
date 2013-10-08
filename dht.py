@@ -15,7 +15,7 @@ import scheduler
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.ERROR)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 ch.setFormatter(formatter)
 logger.addHandler(ch)
@@ -69,8 +69,8 @@ def load_structure(d,file_path='structure.yml'):
 #path_dict = load_structure(d)
 
 def load_data(d):
+    " python json turns int keys into strings"
     try:
-        " python json turns int keys into strings"
         dodj_data = json.loads(open('data.txt').read())
         k = dodj_data.keys()
         data = {}
@@ -80,14 +80,24 @@ def load_data(d):
         print 'fail'
 
 
+global level,max_recursion
+level = 1
+max_recursion = 6 
 
-def walk_test(path='/'):
-    logger.error('walk - '+path)
-    t = d[path]['data']
-    logger.error('subwalk - '+str(t))
-    if type(t) == type([]):
-        for i in t:
-            walk_test(path+'/'+i)
+def walk_test(path='/base'):
+    global level , max_recursion
+    try:
+        t = d[path]
+        print(path)
+        if type(t) == type([]):
+            for i in t:
+                level = level + 1
+                walk_test(path+'/'+i)
+                level = level - 1
+                if level > max_recursion:
+                    break
+    except:
+        logger.error('walk fail on - '+path)
 
 #load_data(d)
 
