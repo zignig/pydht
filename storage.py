@@ -50,7 +50,7 @@ class doc_store:
 
     def insert_doc(self,key,doc):
         "disabled for now"
-        pass
+        return 
         data = doc['data']
         key2 = doc['key']
         conn = sqlite3.connect(self.path)
