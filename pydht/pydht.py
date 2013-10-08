@@ -101,8 +101,8 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         logger.info('storing '+str(key))
         verified_doc = self.server.dht.reg.verify_doc(message['value'])
         if verified_doc:
-            self.server.dht.data[key] = message["value"]
-            self.server.dht.reg.key_store.insert_doc(str(key),message["value"])
+            self.server.dht.data[key] = verified_doc 
+            self.server.dht.reg.key_store.insert_doc(str(key),verified_doc)
         else:
             raise ValueError
 
