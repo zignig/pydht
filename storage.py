@@ -14,6 +14,7 @@ import StringIO
 import time
 import os,sys
 import traceback
+import redis
 
 import readline,rlcompleter
 
@@ -23,53 +24,35 @@ readline.parse_and_bind('tab:complete')
 logger = logging.getLogger(__name__)
 
 class doc_store:
-    "sqlite storage for known docs"
-    base_schema = """
-    CREATE TABLE docs (key text,doc text,timestamp int);
-    """
+    time_out = 86400
+    repli_set = 'replicate'
+    score_set = 'score'
+    def __init__(self,path='docs'):
+        self.r = redis.Redis()
+        self.path = path
+                
+    def insert_doc(self,key,doc):
+        full_path = self.path+':'+str(key)
+        self.r.set(full_path,json.dumps(doc))
+        self.r.zadd(self.repli_set,key,time.time())
+        self.r.expire(full_path,self.time_out)
 
-    def __init__(self,path='public_keys',name='docs.sdb'):
-        db_path = path+os.sep+name
-        try:
-            os.stat(db_path)
-            self.path = db_path
-            self.key_db = sqlite3.connect(db_path)
-        except:
-            logger.info('create doc store '+db_path)
-            self.path = db_path
-            self.key_db = sqlite3.connect(db_path)
-            c = self.key_db.cursor()
-            c.executescript(self.base_schema)
-            self.key_db.commit()
+    def tap(self,key):
+        self.r.zadd(self.repli_set,key,time.time())
+
+    def before(self,span=3600):
+        cur_time = time.time()
+        start_time = cur_time-span 
+        docs = self.r.zrangebyscore(self.repli_set,0,time.time()-span)
+        return docs
+        
+    def get_doc(self,key):
+        full_key = self.path+':'+str(key)
+        if self.r.exists(full_key):
+            doc = self.r.get(full_key)
+            return json.loads(str(doc))
+        else:
+            return None
 
     def dump(self):
-        c = self.key_db.cursor()
-        c.execute('select * from docs')
-        r = c.fetchall()
-        return r 
-
-    def insert_doc(self,key,doc):
-        "disabled for now"
-        return 
-        data = doc['data']
-        key2 = doc['key']
-        conn = sqlite3.connect(self.path)
-        c = conn.cursor()
-        c.execute('insert into docs (key,doc,timestamp) values (?,?,?)',(str(key),json.dumps(doc),time.time()))
-        conn.commit()
-        conn.close()
-
-    def get_doc(self,key):
-        conn = sqlite3.connect(self.path)
-        c = conn.cursor()
-        c.execute('select doc from docs where key = ?',(str(key),))
-        doc = c.fetchone()
-        conn.commit()
-        conn.close()
-        if doc == None:
-            return None
-        return json.loads(str(doc[0]))
-
-    def expire(self):
-        " get rid of old docs"
-        logger.error('expire not written')
+        return self.r.keys(self.path+':*')

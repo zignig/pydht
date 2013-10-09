@@ -3,6 +3,10 @@ base:
     author:
       zignig:
         'http://couch.bl3dr.com/zignig'
+      kaosat-dev:
+        'http://coffeescad.net'
+      garyhodgson:
+        'http://thingtracker.net/'
     library:
       metric:
         nut:

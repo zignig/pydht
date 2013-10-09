@@ -93,7 +93,10 @@ class key_store:
         c = self.key_db.cursor()
         c.execute('select * from keys')
         r = c.fetchall()
-        return r 
+        key_dict = {}
+        for i in r:
+            key_dict[i[0]] = i[1]
+        return key_dict 
 
 def password_callback(*args,**kwds):
     return 
@@ -162,7 +165,6 @@ class registration:
             key_obj = M2Crypto.RSA.load_pub_key_bio(key_as_file)
             self.temp_keys[origin] = key_obj 
             self.keystack.append((origin,key_obj))
-            logger.error(self.keystack)
             self.dht.reg.key_store.insert_key(str(origin),k['data'])
             return key_obj
         except:

@@ -190,8 +190,9 @@ class DHT(object):
 
     def get(self, key):
         hashed_key = hash_function(key)
-        if hashed_key in self.data:
-            return self.reg.verify_doc(self.data[hashed_key])
+        doc = self.reg.doc_store.get_doc(hashed_key)
+        if doc:
+            return self.reg.verify_doc(doc)
         result = self.iterative_find_value(hashed_key)
         verified_doc = self.reg.verify_doc(result)
         if verified_doc:
@@ -217,9 +218,9 @@ class DHT(object):
         hashed_key = hash_function(key)
         nearest_nodes = self.iterative_find_nodes(hashed_key)
         generated_doc = self.reg.gen_doc(key,value)
+        self.reg.doc_store.insert_doc(hashed_key,generated_doc)
         if not nearest_nodes:
-            self.data[hashed_key] = generated_doc 
-            self.keyref[key] = hashed_key
+            self.reg.doc_store.insert_doc(hashed_key,generated_doc)
         for node in nearest_nodes:
             node.store(hashed_key, generated_doc, socket=self.server.socket, peer_id=self.peer.id)
         
