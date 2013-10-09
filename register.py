@@ -134,6 +134,7 @@ class registration:
             logger.error('fail local key')
         self.key_store = key_store()
         self.doc_store = storage.doc_store()
+        self.doc_store.dht_obj = self
     
     def load_priv(self):
         self.priv = M2Crypto.RSA.load_key('keys/private.pem')

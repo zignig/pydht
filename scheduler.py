@@ -10,13 +10,7 @@ sched = Scheduler()
 sched.start()
 
 def job_function(dht_obj):
-    re_rep = dht_obj.reg.doc_store.before()
-    for i in re_rep[0:20]:
-        doc = dht_obj.reg.doc_store.get_doc(i)
-        if doc:
-            logger.critical(doc['key'])
-            dht_obj[str(i)] = doc
-            dht_obj.reg.doc_store.tap(i)
+    re_rep = dht_obj.reg.doc_store.replicate()
 
 
     

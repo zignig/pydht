@@ -45,7 +45,16 @@ class doc_store:
         start_time = cur_time-span 
         docs = self.r.zrangebyscore(self.repli_set,0,time.time()-span)
         return docs
-        
+     
+    def replicate(self,age=3600):
+        re_rep = self.before(age)
+        for i in re_rep[0:20]:
+            doc = self.get_doc(i)
+            if doc:
+                logger.critical(doc['key'])
+                self.dht_obj.dht[str(i)] = doc
+                self.tap(i)
+  
     def get_doc(self,key):
         full_key = self.path+':'+str(key)
         if self.r.exists(full_key):
