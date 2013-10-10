@@ -51,8 +51,8 @@ class doc_store:
         for i in re_rep[0:20]:
             doc = self.get_doc(i)
             if doc:
-                logger.critical(doc['key'])
-                self.dht_obj.dht[str(i)] = doc
+                logger.critical(doc)
+                self.dht_obj.dht.post_item(long(i),doc) 
                 self.tap(i)
   
     def get_doc(self,key):
