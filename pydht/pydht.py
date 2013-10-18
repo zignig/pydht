@@ -97,8 +97,7 @@ class DHTRequestHandler(SocketServer.BaseRequestHandler):
         
     def handle_store(self, message):
         key = message["id"]
-        logger.error("DHT:handle_store need to check message before storing")
-        logger.info('storing '+str(key))
+        logger.error('storing '+str(key))
         verified_doc = self.server.dht.reg.verify_doc(message['value'])
         if verified_doc:
             self.server.dht.data[key] = verified_doc 
@@ -209,8 +208,7 @@ class DHT(object):
         nearest_nodes = self.iterative_find_nodes(hashed_key)
         generated_doc = value
         if not nearest_nodes:
-            self.data[hashed_key] = generated_doc 
-            self.keyref[key] = hashed_key
+            self.reg.doc_store.insert_doc(hashed_key,generated_doc)
         for node in nearest_nodes:
             node.store(hashed_key, generated_doc, socket=self.server.socket, peer_id=self.peer.id)
 

@@ -47,8 +47,8 @@ def make_path(base,dict,path_dict):
     if type(dict) == type({}):
         k = dict.keys()
         for i in k:
-            p = make_path(base+'/'+i,dict[i],path_dict)
-            path_dict[base+'/'+i] = p 
+            p = make_path(base+'.'+i,dict[i],path_dict)
+            path_dict[base+'.'+i] = p 
         return k 
     else:
         print 'data:',base,dict
@@ -84,7 +84,7 @@ global level,max_recursion
 level = 1
 max_recursion = 6 
 
-def walk_test(path='/base'):
+def walk_test(path='.base'):
     global level , max_recursion
     try:
         t = d[path]
@@ -92,7 +92,7 @@ def walk_test(path='/base'):
         if type(t) == type([]):
             for i in t:
                 level = level + 1
-                walk_test(path+'/'+i)
+                walk_test(path+'.'+i)
                 level = level - 1
                 if level > max_recursion:
                     break
@@ -107,4 +107,5 @@ def save():
     f.close()
 
 if __name__ == "__main__":
+    walk_test()
     pass
